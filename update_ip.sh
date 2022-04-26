@@ -90,6 +90,6 @@ if [ $dns_origin_certificate = withcert ]; then
     curl -s -X POST "https://api.cloudflare.com/client/v4/certificates" \
           -H "X-Auth-User-Service-Key: $service_key" \
           -H "Content-Type: application/json" \
-           --data "{\"hostname\":\"$dns_record\",\"requested_validity\":5475,\"request_type\":\"origin-rsa\",\"csr\":\"$dns_csr\"}" \
-    | jq -r '.result.certificate' > public.cert
+          --data "{\"hostnames\":[\"$dns_record\",\"$zone_name\"],\"requested_validity\":5475,\"request_type\":\"origin-rsa\",\"csr\":\"$dns_csr\"}" \
+     | jq -r '.result.certificate' > public.cert
  fi
