@@ -1,5 +1,4 @@
 #!/bin/bash
-# based on https://gist.github.com/Tras2/cba88201b17d765ec065ccbedfb16d9a
 # initial data; they need to be filled by the user
 ## API token; e.g. FErsdfklw3er59dUlDce44-3D43dsfs3sddsFoD3
 api_token=<YOUR_API_TOKEN>
@@ -11,7 +10,9 @@ zone_name=<YOUR_DOMAIN>
 dns_record=<YOUR_SUB_DOMAIN>
 ## the override token to allow updates to existing records true=allow, false=disallow
 dns_override=false
-
+## request origin certificate (for communication with Cloudflare only)
+dns_origin_certificate=false
+service_key=<YOU_SERVICE_KEY>
 
 # get the basic data
 ipv4=$(curl -s -X GET -4 https://ifconfig.co)
@@ -78,3 +79,13 @@ if [ $user_id ]; then
 else
     echo -e "\033[0;31m [-] There is a problem with either the API token. Check it and try again."
 fi
+
+if [ $dns_origin_certificate=true ]; then
+     openssl req -nodes -newkey rsa:2048 -keyout private.key -out request.csr -subj "/CN=$dns_record"
+     dns_csr=$(awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' request.csr)
+     curl -s -X POST "https://api.cloudflare.com/client/v4/certificates" \
+      -H "X-Auth-User-Service-Key: $service_key" \
+      -H "Content-Type: application/json" \
+      --data "{\"hostname\":\"$dns_record\",\"requested_validity\":5475,\"request_type\":\"origin-rsa\",\"csr\":\"$dns_csr\"}" \
+      | jq -r '.result.certificate' > public.cert
+ fi
