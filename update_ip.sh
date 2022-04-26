@@ -10,7 +10,7 @@ zone_name=<YOUR_DOMAIN>
 ## the dns record (sub-domain) should be modified; e.g. sub.example.com
 dns_record=<YOUR_SUB_DOMAIN>
 ## the override token to allow updates to existing records true=allow, false=disallow
-dns_override=true
+dns_override=false
 
 
 # get the basic data
