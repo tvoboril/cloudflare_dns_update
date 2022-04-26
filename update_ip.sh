@@ -1,18 +1,18 @@
 #!/bin/bash
 # initial data; they need to be filled by the user
 ## API token; e.g. FErsdfklw3er59dUlDce44-3D43dsfs3sddsFoD3
-api_token=<YOUR_API_TOKEN>
+api_token=
 ## the email address associated with the Cloudflare account; e.g. email@gmail.com
-email=<YOUR_EMAIL>
+email=
 ## the zone (domain) should be modified; e.g. example.com
-zone_name=<YOUR_DOMAIN>
+zone_name=
 ## the dns record (sub-domain) should be modified; e.g. sub.example.com
-dns_record=<YOUR_SUB_DOMAIN>
+dns_record=
 ## the override token to allow updates to existing records true=allow, false=disallow
 dns_override=false
 ## request origin certificate (for communication with Cloudflare only)
 dns_origin_certificate=$1
-service_key=<YOU_SERVICE_KEY>
+service_key=
 
 # get the basic data
 ipv4=$(curl -s -X GET -4 https://ifconfig.co)
@@ -80,8 +80,8 @@ else
     echo -e "\033[0;31m [-] There is a problem with either the API token. Check it and try again."
 fi
 
-# if user has passed "withcert" to command, request origin cert
-if [ $dns_origin_certificate = withcert ]; then
+# if user has passed withcert to command, request origin cert
+if [ "$dns_origin_certificate" = withcert ]; then
     # create Certificate Request
     openssl req -nodes -newkey rsa:2048 -keyout private.key -out request.csr -subj "/CN=$dns_record"
     # convert csr to newline-encoded format
