@@ -20,56 +20,49 @@ user_id=$(curl -s -X GET "https://api.cloudflare.com/client/v4/user/tokens/verif
                -H "Content-Type:application/json" \
           | jq -r '{"result"}[] | .id'
          )
-
-# write down IPv4
+# Get IPv4
 if [ $ipv4 ]; then echo -e "\033[0;32m [+] Your public IPv4 address: $ipv4"; else echo -e "\033[0;33m [!] Unable to get any public IPv4 address."; fi
 
-# check if the user API is valid and the email is correct
-if [ $user_id ]
-then
+# Validate user API and the email
+if [ $user_id ]; then
     zone_id=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=$zone_name&status=active" \
                    -H "Content-Type: application/json" \
                    -H "X-Auth-Email: $email" \
                    -H "Authorization: Bearer $api_token" \
               | jq -r '{"result"}[] | .[0] | .id'
              )
-    # check if the zone ID is avilable
-    if [ $zone_id ]
-    then
-        # check if there is any IP version 4
-        if [ $ipv4 ]
-        then
+# check if the zone ID is avilable
+    if [ $zone_id ]; then
+# check if there is any IP version 4
+        if [ $ipv4 ]; then
             dns_record_a_id=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$zone_id/dns_records?type=A&name=$dns_record"  \
                                    -H "Content-Type: application/json" \
                                    -H "X-Auth-Email: $email" \
                                    -H "Authorization: Bearer $api_token"
                              )
-            # if the IPv4 exist
+# if the IPv4 exist
             dns_record_a_ip=$(echo $dns_record_a_id |  jq -r '{"result"}[] | .[0] | .content')
-            if [ $dns_record_a_ip != $ipv4 ]
-            then
-                if [ $dns_record_a_ip = null ]
-                then
-                    # create the A record
+            if [ $dns_record_a_ip != $ipv4 ]; then
+                if [ $dns_record_a_ip = null ]; then
+# create the A record
                     curl -s -X POST "https://api.cloudflare.com/client/v4/zones/$zone_id/dns_records" \
                         -H "X-Auth-Email: $email" \
                         -H "Authorization: Bearer $api_token" \
                         -H "Content-Type: application/json" \
                         --data "{\"type\":\"A\",\"name\":\"$dns_record\",\"content\":\"$ipv4\",\"ttl\":1,\"proxied\":false}" \
                     | jq -r '.errors'
-                    # write the result
+# write the result
                     echo -e "\033[0;32m [+] The A record $dns_record was CREATED on Cloudflare with an address of: $ipv4"
                 else
-                    if [ $dns_override = true ]
-                    then
-                        # change the A record
+                    if [ $dns_override = true ]; then
+# change the A record
                         curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/$zone_id/dns_records/$(echo $dns_record_a_id | jq -r '{"result"}[] | .[0] | .id')" \
                              -H "Content-Type: application/json" \
                              -H "X-Auth-Email: $email" \
                              -H "Authorization: Bearer $api_token" \
                              --data "{\"type\":\"A\",\"name\":\"$dns_record\",\"content\":\"$ipv4\",\"ttl\":1,\"proxied\":false}" \
                         | jq -r '.errors'
-                        # write the result
+# write the result
                         echo -e "\033[0;32m [+] The A record $dns_record was UPDATED on Cloudflare from: $dns_record_a_ip to an address of: $ipv4"
                     else
                         echo -e "\033[0;31m [-] Updates to $dns_record are not allowed, pass the correct token to override."
