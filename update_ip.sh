@@ -11,7 +11,6 @@ dns_record=
 ## the override token to allow updates to existing records true=allow, false=disallow
 dns_override=false
 ## request origin certificate (for communication with Cloudflare only)
-dns_origin_certificate=$1
 service_key=
 
 # get the basic data
@@ -80,16 +79,21 @@ else
     echo -e "\033[0;31m [-] There is a problem with either the API token. Check it and try again."
 fi
 
-# if user has passed withcert to command, request origin cert
+# if user has passed withcert to command, request origin cert from cloudflare
+dns_origin_certificate=$1
+
 if [ "$dns_origin_certificate" = withcert ]; then
+
     # create Certificate Request
     openssl req -nodes -newkey rsa:2048 -keyout private.key -out request.csr -subj "/CN=$dns_record"
+
     # convert csr to newline-encoded format
     dns_csr=$(awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' request.csr)
+
     # request certififate from Cloudflare and output as cert
     curl -s -X POST "https://api.cloudflare.com/client/v4/certificates" \
           -H "X-Auth-User-Service-Key: $service_key" \
           -H "Content-Type: application/json" \
           --data "{\"hostnames\":[\"$dns_record\",\"$zone_name\"],\"requested_validity\":5475,\"request_type\":\"origin-rsa\",\"csr\":\"$dns_csr\"}" \
      | jq -r '.result.certificate' > public.cert
- fi
+fi
